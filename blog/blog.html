@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quill.js 存檔與檢視</title>
+    <!-- 引入 Quill.js 的樣式 -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+
+<h2>使用 Quill.js 插入圖片及文字</h2>
+
+<!-- 標題輸入框 -->
+<input type="text" id="title" placeholder="輸入標題" style="width: 100%; margin-bottom: 10px;">
+<!-- 編輯器容器 -->
+<div id="editor-container" style="height: 200px;">
+</div>
+<button id="saveBtn">存檔</button>
+
+<h2>已存檔清單</h2>
+<ul id="contentList" style="border: 1px solid #ccc; padding: 10px;">
+    <!-- 此處將顯示已存檔的清單 -->
+</ul>
+
+<h2>檢視存檔內容</h2>
+<div id="displayDiv" style="border: 1px solid #ccc; padding: 10px;"></div>
+
+<!-- 引入 Quill.js -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<script>
+    const quill = new Quill('#editor-container', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, false] }],
+                ['bold', 'italic', 'underline'],
+                ['image', 'code-block']
+            ]
+        }
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', function() {
+        const title = document.getElementById('title').value;
+        const content = quill.root.innerHTML;
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "save_content.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                alert("內容已存檔");
+                loadContentList();
+            }
+        };
+        xhr.send("title=" + encodeURIComponent(title) + "&content=" + encodeURIComponent(content));
+    });
+
+    function loadContentList() {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "load_content_list.php", true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                document.getElementById('contentList').innerHTML = xhr.responseText;
+            }
+        };
+        xhr.send();
+    }
+
+    function viewContent(id) {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", "view_content.php?id=" + id, true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                document.getElementById('displayDiv').innerHTML = xhr.responseText;
+            }
+        };
+        xhr.send();
+    }
+
+    // 頁面加載後自動加載已存檔清單
+    window.onload = loadContentList;
+</script>
+
+</body>
+</html>
